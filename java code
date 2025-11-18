@@ -10,43 +10,43 @@ public class Lab_13_FileListMaker {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         // The main list that holds the data
-        List<String> currentList = new ArrayList<>(); 
+        List<String> currentList = new ArrayList<>();
         // The 'dirty' flag required by the lab [cite: 29, 30]
-        boolean needsToBeSaved = false; 
+        boolean needsToBeSaved = false;
         // Variable to hold the name of the last loaded/saved file for quick saving [cite: 37]
-        String currentFileName = null; 
+        String currentFileName = null;
         boolean quit = false;
 
         System.out.println("=== File List Maker ===");
 
-        // The lab requires a central try-catch block in main() to handle file exceptions 
+        // The lab requires a central try-catch block in main() to handle file exceptions
         try {
             while (!quit) {
                 printMenu();
                 System.out.print("Enter choice: ");
                 String choice = scanner.nextLine().toUpperCase();
-                
+
                 // --- Core Program Logic (Menu Options) ---
                 switch (choice) {
                     case "V": // View/Print the list [cite: 18, 25]
                         System.out.println("\nCurrent List:");
                         viewList(currentList);
                         break;
-                        
+
                     case "O": // Open a list file from disk [cite: 22]
                         // Bulletproof: Check for unsaved changes before loading new file [cite: 54]
                         if (needsToBeSaved && !promptToSave(scanner, currentList, currentFileName)) {
                             // User chose to cancel load (didn't save or abandon)
                             System.out.println("Open operation cancelled.");
-                            break; 
+                            break;
                         }
-                        
+
                         System.out.print("Enter filename to open (without .txt): ");
                         String baseName = scanner.nextLine();
                         currentFileName = baseName + ".txt"; // File name must include .txt [cite: 38]
-                        
+
                         // Load the list using the static method (which throws IOException)
-                        currentList = loadFile(currentFileName); 
+                        currentList = loadFile(currentFileName);
                         System.out.println("\nSuccessfully loaded: " + currentFileName);
                         needsToBeSaved = false; // Reset the dirty flag
                         break;
@@ -58,13 +58,13 @@ public class Lab_13_FileListMaker {
                             String newBaseName = scanner.nextLine();
                             currentFileName = newBaseName + ".txt";
                         }
-                        
+
                         // Save the list using the static method (which throws IOException)
                         saveFile(currentFileName, currentList);
                         System.out.println("\nSuccessfully saved list to: " + currentFileName);
                         needsToBeSaved = false; // Clear the dirty flag
                         break;
-                        
+
                     // --- Other Options (Modify the List and Set Dirty Flag) ---
                     case "A": // Add item [cite: 15]
                     case "D": // Delete item [cite: 16]
@@ -72,8 +72,8 @@ public class Lab_13_FileListMaker {
                     case "M": // Move item [cite: 21]
                     case "C": // Clear list [cite: 24]
                         // *** (YOUR IMPLEMENTATION CODE FOR EDITING GOES HERE) ***
-                        // Example: currentList.add("New Item"); 
-                        System.out.println("List modified."); 
+                        // Example: currentList.add("New Item");
+                        System.out.println("List modified.");
                         needsToBeSaved = true; // Any change makes the list dirty [cite: 31]
                         break;
 
@@ -81,7 +81,7 @@ public class Lab_13_FileListMaker {
                         // Bulletproof: Check for unsaved changes before quitting [cite: 57]
                         if (needsToBeSaved && !promptToSave(scanner, currentList, currentFileName)) {
                             System.out.println("Quit operation cancelled.");
-                            break; 
+                            break;
                         }
                         quit = true;
                         System.out.println("Exiting List Maker. Goodbye!");
@@ -91,15 +91,15 @@ public class Lab_13_FileListMaker {
                         System.out.println("Invalid choice. Please try again.");
                 }
             }
-        // --- Central Exception Handler ---
-        } catch (IOException e) { 
+            // --- Central Exception Handler ---
+        } catch (IOException e) {
             // This catches exceptions thrown by loadFile and saveFile [cite: 42, 43]
             System.err.println("\nFile error: " + e.getMessage());
         } finally {
             scanner.close(); // Always close the scanner
         }
     }
-    
+
     // =========================================================================
     // STATIC SUPPORT METHODS
     // =========================================================================
@@ -111,7 +111,7 @@ public class Lab_13_FileListMaker {
     public static List<String> loadFile(String filename) throws IOException {
         Path filePath = Path.of(filename);
         // Files.readAllLines is the easiest way to read all lines into a List
-        List<String> list = Files.readAllLines(filePath); 
+        List<String> list = Files.readAllLines(filePath);
         return list;
     }
 
@@ -124,7 +124,7 @@ public class Lab_13_FileListMaker {
         // Files.write writes all lines to the path
         Files.write(filePath, list);
     }
-    
+
     /**
      * Helper method to print the list.
      */
@@ -137,7 +137,7 @@ public class Lab_13_FileListMaker {
             }
         }
     }
-    
+
     /**
      * Prompts the user to save or abandon the unsaved list.
      * Returns true if the user proceeded (saved or abandoned), false if the operation was cancelled.
@@ -146,7 +146,7 @@ public class Lab_13_FileListMaker {
         System.out.println("\nWARNING: You have unsaved changes. Do you want to save them now?");
         System.out.print("Enter Y to save, N to abandon, or C to cancel the current operation: ");
         String response = scanner.nextLine().toUpperCase();
-        
+
         if (response.equals("Y")) {
             // Re-use the save logic
             if (currentFileName == null) {
