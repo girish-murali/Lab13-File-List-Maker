@@ -1,0 +1,182 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+public class Lab_13_FileListMaker {
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        // The main list that holds the data
+        List<String> currentList = new ArrayList<>(); 
+        // The 'dirty' flag required by the lab [cite: 29, 30]
+        boolean needsToBeSaved = false; 
+        // Variable to hold the name of the last loaded/saved file for quick saving [cite: 37]
+        String currentFileName = null; 
+        boolean quit = false;
+
+        System.out.println("=== File List Maker ===");
+
+        // The lab requires a central try-catch block in main() to handle file exceptions 
+        try {
+            while (!quit) {
+                printMenu();
+                System.out.print("Enter choice: ");
+                String choice = scanner.nextLine().toUpperCase();
+                
+                // --- Core Program Logic (Menu Options) ---
+                switch (choice) {
+                    case "V": // View/Print the list [cite: 18, 25]
+                        System.out.println("\nCurrent List:");
+                        viewList(currentList);
+                        break;
+                        
+                    case "O": // Open a list file from disk [cite: 22]
+                        // Bulletproof: Check for unsaved changes before loading new file [cite: 54]
+                        if (needsToBeSaved && !promptToSave(scanner, currentList, currentFileName)) {
+                            // User chose to cancel load (didn't save or abandon)
+                            System.out.println("Open operation cancelled.");
+                            break; 
+                        }
+                        
+                        System.out.print("Enter filename to open (without .txt): ");
+                        String baseName = scanner.nextLine();
+                        currentFileName = baseName + ".txt"; // File name must include .txt [cite: 38]
+                        
+                        // Load the list using the static method (which throws IOException)
+                        currentList = loadFile(currentFileName); 
+                        System.out.println("\nSuccessfully loaded: " + currentFileName);
+                        needsToBeSaved = false; // Reset the dirty flag
+                        break;
+
+                    case "S": // Save the current list to disk [cite: 23]
+                        if (currentFileName == null) {
+                            // If never loaded/saved, prompt for a new base name [cite: 51]
+                            System.out.print("Enter NEW base filename to save (without .txt): ");
+                            String newBaseName = scanner.nextLine();
+                            currentFileName = newBaseName + ".txt";
+                        }
+                        
+                        // Save the list using the static method (which throws IOException)
+                        saveFile(currentFileName, currentList);
+                        System.out.println("\nSuccessfully saved list to: " + currentFileName);
+                        needsToBeSaved = false; // Clear the dirty flag
+                        break;
+                        
+                    // --- Other Options (Modify the List and Set Dirty Flag) ---
+                    case "A": // Add item [cite: 15]
+                    case "D": // Delete item [cite: 16]
+                    case "I": // Insert item [cite: 17]
+                    case "M": // Move item [cite: 21]
+                    case "C": // Clear list [cite: 24]
+                        // *** (YOUR IMPLEMENTATION CODE FOR EDITING GOES HERE) ***
+                        // Example: currentList.add("New Item"); 
+                        System.out.println("List modified."); 
+                        needsToBeSaved = true; // Any change makes the list dirty [cite: 31]
+                        break;
+
+                    case "Q": // Quit program [cite: 19]
+                        // Bulletproof: Check for unsaved changes before quitting [cite: 57]
+                        if (needsToBeSaved && !promptToSave(scanner, currentList, currentFileName)) {
+                            System.out.println("Quit operation cancelled.");
+                            break; 
+                        }
+                        quit = true;
+                        System.out.println("Exiting List Maker. Goodbye!");
+                        break;
+
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                }
+            }
+        // --- Central Exception Handler ---
+        } catch (IOException e) { 
+            // This catches exceptions thrown by loadFile and saveFile [cite: 42, 43]
+            System.err.println("\nFile error: " + e.getMessage());
+        } finally {
+            scanner.close(); // Always close the scanner
+        }
+    }
+    
+    // =========================================================================
+    // STATIC SUPPORT METHODS
+    // =========================================================================
+
+    /**
+     * Loads the contents of a text file into a List<String>.
+     * Throws an IOException if the file cannot be read or found.
+     */
+    public static List<String> loadFile(String filename) throws IOException {
+        Path filePath = Path.of(filename);
+        // Files.readAllLines is the easiest way to read all lines into a List
+        List<String> list = Files.readAllLines(filePath); 
+        return list;
+    }
+
+    /**
+     * Writes the contents of a List<String> to a text file.
+     * Throws an IOException if the file cannot be written.
+     */
+    public static void saveFile(String filename, List<String> list) throws IOException {
+        Path filePath = Path.of(filename);
+        // Files.write writes all lines to the path
+        Files.write(filePath, list);
+    }
+    
+    /**
+     * Helper method to print the list.
+     */
+    public static void viewList(List<String> list) {
+        if (list.isEmpty()) {
+            System.out.println("The list is currently empty.");
+        } else {
+            for (int i = 0; i < list.size(); i++) {
+                System.out.println((i + 1) + ". " + list.get(i));
+            }
+        }
+    }
+    
+    /**
+     * Prompts the user to save or abandon the unsaved list.
+     * Returns true if the user proceeded (saved or abandoned), false if the operation was cancelled.
+     */
+    private static boolean promptToSave(Scanner scanner, List<String> currentList, String currentFileName) throws IOException {
+        System.out.println("\nWARNING: You have unsaved changes. Do you want to save them now?");
+        System.out.print("Enter Y to save, N to abandon, or C to cancel the current operation: ");
+        String response = scanner.nextLine().toUpperCase();
+        
+        if (response.equals("Y")) {
+            // Re-use the save logic
+            if (currentFileName == null) {
+                System.out.print("Enter NEW base filename to save (without .txt): ");
+                String newBaseName = scanner.nextLine();
+                currentFileName = newBaseName + ".txt";
+            }
+            saveFile(currentFileName, currentList);
+            return true; // Proceed after saving
+        } else if (response.equals("N")) {
+            return true; // Proceed after abandoning
+        } else {
+            return false; // Cancel the operation (Load/Quit)
+        }
+    }
+
+    /**
+     * Helper method to display the menu.
+     */
+    private static void printMenu() {
+        System.out.println("\n=== File List Maker Menu ===");
+        System.out.println("A - Add item");
+        System.out.println("D - Delete item");
+        System.out.println("I - Insert item");
+        System.out.println("M - Move item");
+        System.out.println("C - Clear all elements");
+        System.out.println("V - View the list");
+        System.out.println("O - Open a list file from disk");
+        System.out.println("S - Save the current list to disk");
+        System.out.println("Q - Quit the program");
+        System.out.println("============================");
+    }
+}
